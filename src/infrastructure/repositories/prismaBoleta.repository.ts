@@ -61,7 +61,7 @@ export class PrismaBoletaRepository implements IBoletaRepository {
   async softDelete(id: number): Promise<void> {
     await prisma.boletas.update({
       where: { id: Number(id) },
-      data: { state: 'DELETED' }
+      data: { state: 'REMOVED' }
     });
   }
 
