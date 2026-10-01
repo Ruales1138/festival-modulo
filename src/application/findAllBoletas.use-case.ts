@@ -1,6 +1,6 @@
 import { IBoletaRepository } from '../domain/repository/IBoletaRepository.js';
 import { BoletaFilter } from '../domain/models/Boleta.js';
-import { validateOptionalPositiveInteger, validatePagination } from '../utils/dataValidation.js';
+import { validateOptionalPositiveInteger, validatePagination, validateTipoBoleta } from '../utils/dataValidation.js';
 
 export class FindAllBoletasUseCase {
   constructor(private boletaRepository: IBoletaRepository) {}
@@ -9,7 +9,7 @@ export class FindAllBoletasUseCase {
     const dia_id = validateOptionalPositiveInteger(queryParams?.dia_id, 'dia_id');
     const asistente_id = validateOptionalPositiveInteger(queryParams?.asistente_id, 'asistente_id');
     const { page, limit } = validatePagination(queryParams?.page, queryParams?.limit);
-    const tipo = queryParams?.tipo ? String(queryParams.tipo) : undefined;
+    const tipo = queryParams?.tipo ? validateTipoBoleta(String(queryParams.tipo)) : undefined;
 
     const filter: BoletaFilter = {
       dia_id,

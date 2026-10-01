@@ -38,7 +38,7 @@ export class BoletasController {
 
   findById = async (req: Request, res: Response): Promise<void> => {
     try {
-      const boleta = await this.findBoletaByIdUseCase.execute(req.params.id);
+      const boleta = await this.findBoletaByIdUseCase.execute(String(req.params.id));
       res.status(200).json({ data: boleta });
     } catch (error) {
       this.handleError(error, res);
@@ -56,7 +56,7 @@ export class BoletasController {
 
   update = async (req: Request, res: Response): Promise<void> => {
     try {
-      const updatedBoleta = await this.updateBoletaUseCase.execute(req.params.id, req.body);
+      const updatedBoleta = await this.updateBoletaUseCase.execute(String(req.params.id), req.body);
       res.status(200).json({ data: updatedBoleta });
     } catch (error) {
       this.handleError(error, res);
@@ -74,7 +74,7 @@ export class BoletasController {
 
   getDisponibilidad = async (req: Request, res: Response): Promise<void> => {
     try {
-      const disponibilidad = await this.getDisponibilidadUseCase.execute(req.params.diaId);
+      const disponibilidad = await this.getDisponibilidadUseCase.execute(String(req.params.diaId));
       res.status(200).json({ data: disponibilidad });
     } catch (error) {
       this.handleError(error, res);

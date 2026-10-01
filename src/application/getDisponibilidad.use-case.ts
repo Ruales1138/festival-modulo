@@ -1,13 +1,13 @@
 import { IBoletaRepository } from '../domain/repository/IBoletaRepository.js';
 import { DisponibilidadData } from '../domain/models/Boleta.js';
-import { BadRequestError, NotFoundError } from '../utils/error.handler.js';
+import { NotFoundError } from '../utils/error.handler.js';
+import { validatePositiveInteger } from '../utils/dataValidation.js';
 
 export class GetDisponibilidadUseCase {
   constructor(private repository: IBoletaRepository) {}
 
   async execute(diaIdStr: string): Promise<DisponibilidadData> {
-    const diaId = Number(diaIdStr);
-    if (isNaN(diaId)) throw new BadRequestError('ID de día inválido');
+    const diaId = validatePositiveInteger(diaIdStr, 'diaId');
 
     const diaCheck = await this.repository.checkDiaExists(diaId);
     if (!diaCheck.exists) {
