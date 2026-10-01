@@ -1,68 +1,100 @@
-# Kit de la maratón — Festival Picnic 2026
+# API de Boleteria - Festival Picnic 2026
 
-Todo lo que necesitas para construir tu módulo.
+Backend REST del modulo de boleteria para el Festival Picnic 2026. La API permite consultar, vender, actualizar y eliminar logicamente boletas, ademas de consultar la disponibilidad por dia.
 
-| Carpeta | Qué contiene |
+## Equipo y aportes
+
+Los siguientes integrantes aparecen registrados en el historial de Git del repositorio:
+
+| Integrante | Aporte principal |
 |---|---|
-| `contratos/` | [Convenciones comunes](contratos/CONVENCIONES.md) y el contrato de cada módulo |
-| `pruebas/` | El ejecutor y las **pruebas públicas** de cada módulo |
+| Tomás Buriticá Jaramillo | Estructura inicial, configuracion de TypeScript/Prisma, sincronizacion del esquema, modelos, casos de uso, utilidades y servidor Express. |
+| Juan Sebastian Pinilla Giraldo | Rutas, repositorio Prisma, separacion del controlador en la capa `interface` y correcciones de pruebas publicas. |
+| Heiver David Ruales Luna | Validaciones, reglas de negocio, pruebas y configuracion de variables de entorno. |
 
-## 1. Arrancar el proyecto (15 minutos)
+## Tecnologias y arquitectura
 
-Parte de la estructura del proyecto de clase (`desarrollo-web-backend`): Express + TypeScript + Prisma, cuatro capas.
+- Node.js, Express y TypeScript.
+- Prisma Client con PostgreSQL.
+- Arquitectura en cuatro capas:
+  - `src/domain`: modelos y contratos de repositorio.
+  - `src/application`: casos de uso y reglas de negocio.
+  - `src/infrastructure`: Prisma y acceso a PostgreSQL.
+  - `src/interface`: controladores y rutas HTTP.
+
+Los casos de uso dependen de `IBoletaRepository`, por lo que no conocen Prisma. El acceso a datos esta concentrado en `PrismaBoletaRepository`.
+
+## Instalacion
+
+Requisitos: Node.js 18 o superior y acceso a la base PostgreSQL compartida.
 
 ```bash
-mkdir festival-<modulo> && cd festival-<modulo>
-git init
-npm init -y
-npm install express cors dotenv @prisma/client @prisma/adapter-pg pg
-npm install -D typescript tsx nodemon prisma @types/express @types/cors @types/node @types/pg
-npx prisma init
-npm pkg set type=module
+npm install
 ```
 
-En `.env` pon la cadena de conexión que entrega el docente, y crea `.env.example` sin la contraseña:
+Crea un archivo `.env` a partir de `.env.example` y agrega las credenciales entregadas por el docente:
 
-```
-DATABASE_URL="postgresql://..."
+```env
+DATABASE_URL="postgresql://usuario:CONTRASENA@host:5432/base_de_datos"
 PORT=3000
 ```
 
-En `package.json` agrega los scripts (los mismos de clase):
-
-```json
-"dev": "nodemon --ext ts,json --exec 'tsx ./src/app.ts'",
-"sync": "npx prisma db pull && npx prisma generate"
-```
-
-Trae el esquema de la base compartida:
+Sincroniza el esquema existente y genera Prisma:
 
 ```bash
 npm run sync
 ```
 
-`db pull` muestra un aviso sobre *check constraints* que Prisma no soporta: es normal, ignóralo. Deben aparecer 23 modelos en `prisma/schema.prisma`.
+La base de datos es compartida. No ejecutes `prisma migrate` ni `prisma db push`.
 
-> ⚠️ **Nunca** ejecutes `npx prisma migrate` ni `npx prisma db push`: la base es compartida y podrías borrar las tablas de los otros equipos.
-
-## 2. Correr las pruebas
-
-Con tu API encendida, desde la carpeta del kit:
+## Ejecutar la API
 
 ```bash
-node pruebas/correr.mjs <modulo> http://localhost:3000
+npm run dev
 ```
 
-Ejemplo:
+La API queda disponible en `http://localhost:3000` o en el puerto definido por `PORT`.
+
+## Endpoints principales
+
+Base: `/api/boletas`
+
+| Metodo | Ruta | Descripcion |
+|---|---|---|
+| `GET` | `/api/boletas` | Lista boletas activas con paginacion y filtros. |
+| `GET` | `/api/boletas/:id` | Consulta una boleta activa. |
+| `POST` | `/api/boletas` | Vende una boleta. |
+| `PATCH` | `/api/boletas/:id` | Cambia el tipo y recalcula el precio. |
+| `DELETE` | `/api/boletas/:id` | Realiza borrado logico. |
+| `GET` | `/api/boletas/dia/:diaId/disponibilidad` | Consulta aforo, ventas y cupos disponibles. |
+
+## Regla de negocio principal
+
+Un asistente solo puede tener una boleta activa para el mismo dia y nunca se puede superar el aforo del dia.
+
+Estas reglas estan implementadas en `src/application/createBoleta.use-case.ts`:
+
+1. Se valida la existencia del asistente y del dia.
+2. Se cuentan las boletas activas del dia y se rechaza la venta con `409` si el aforo esta lleno.
+3. Se verifica si el asistente ya tiene una boleta activa para ese dia y se rechaza con `409` si existe.
+4. El precio se calcula en el servidor segun el tipo: `GENERAL`, `VIP` o `PLATINO`.
+
+Tambien se prueban estas reglas en `pruebas/boleteria/boletas.mjs`.
+
+## Pruebas
+
+Las pruebas publicas pertenecen al kit oficial de la maraton. Con `pruebas/correr.mjs` y `pruebas/lib.mjs` disponibles, ejecuta:
 
 ```bash
 node pruebas/correr.mjs boleteria http://localhost:3000
 ```
 
-Cada prueba en rojo dice qué petición hizo y qué respondió tu API. Solo necesitas Node 18 o superior; el ejecutor no instala nada.
+El archivo especifico del modulo es `pruebas/boleteria/boletas.mjs`. En este repositorio debe estar presente el runner oficial del kit para ejecutar la suite HTTP completa.
 
-Las pruebas crean registros y los borran al final, así que puedes correrlas todas las veces que quieras.
+La suite de pruebas ocultas es ejecutada por el docente contra la API y cubre validaciones, reglas de negocio y casos limite.
 
-## 3. Las pruebas ocultas
+## Variables y seguridad
 
-El docente tiene un segundo grupo de pruebas que **no está en este kit**: casos borde de validación y de las reglas de negocio. Todo lo que evalúan está escrito en tu contrato y en las convenciones. Si tu API cumple el contrato completo, y no solo las pruebas públicas, las pasará.
+- `.env` contiene credenciales locales y no debe subirse a GitHub.
+- `.env.example` documenta las variables necesarias sin incluir la contrasena real.
+- El modulo solo escribe en la tabla `boletas` y lee las tablas relacionadas necesarias para validar asistentes y dias.
