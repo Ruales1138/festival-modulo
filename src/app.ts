@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import boletasRouter from './infrastructure/routes/boletas.routes.js';
+import boletasRouter from './interface/routes/boletas.routes.js';
 
 dotenv.config();
 

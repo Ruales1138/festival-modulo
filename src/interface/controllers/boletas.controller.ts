@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { PrismaBoletaRepository } from '../repositories/prismaBoleta.repository.js';
+import { PrismaBoletaRepository } from '../../infrastructure/repositories/prismaBoleta.repository.js';
 import { CreateBoletaUseCase } from '../../application/createBoleta.use-case.js';
 import { FindAllBoletasUseCase } from '../../application/findAllBoletas.use-case.js';
 import { FindBoletaByIdUseCase } from '../../application/findBoletaById.use-case.js';
